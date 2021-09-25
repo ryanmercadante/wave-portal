@@ -1,6 +1,9 @@
+import { ethers } from 'hardhat'
+
 const main = async () => {
   // hre = Hardhat Runtime Environment
-  const waveContractFactory = await hre.ethers.getContractFactory('WavePortal')
+  const [owner, randomPerson] = await ethers.getSigners()
+  const waveContractFactory = await ethers.getContractFactory('WavePortal')
   const waveContract = await waveContractFactory.deploy()
 
   // Wait for the contract to be mined
