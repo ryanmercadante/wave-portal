@@ -52,9 +52,9 @@ async function fetchWaves(
 
 export default function Home() {
   const [currentAccount, setCurrentAccount] = useState('')
-  const [waveCount, setWaveCount] = useState(0)
   const [allWaves, setAllWaves] = useState<CleanedWave[]>([])
   const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   async function getAllWaves() {
     if (!window.ethereum) return
@@ -64,8 +64,19 @@ export default function Home() {
     const waves = await fetchWaves(wavePortalContract)
     if (!waves) return
 
-    console.log('here', waves)
     setAllWaves(waves)
+
+    // Listen for emitter events.
+    wavePortalContract.on('NewWave', (from, timestamp, message) => {
+      setAllWaves((prevState) => [
+        ...prevState,
+        {
+          address: from,
+          timestamp: new Date(timestamp * 1000),
+          message,
+        } as unknown as CleanedWave,
+      ])
+    })
   }
 
   async function checkIfWalletConnected() {
@@ -77,8 +88,6 @@ export default function Home() {
       console.log('Make sure you have MetaMask installed!')
       return
     }
-
-    console.log('Ethereum object detected:', window.ethereum)
 
     // Check if we're authorized to access the user's wallet.
     try {
@@ -110,7 +119,6 @@ export default function Home() {
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts',
       })
-      console.log('Current Account:', accounts[0])
       setCurrentAccount(accounts[0])
     } catch (err) {
       console.error('Something went wrong connecting wallet:', err)
@@ -120,31 +128,26 @@ export default function Home() {
   async function wave(e: React.FormEvent) {
     e.preventDefault()
 
+    setError('')
+
     if (!window.ethereum) return
 
     const wavePortalContract = getWavePortalContract(ethers, window.ethereum)
 
     try {
-      let count = await wavePortalContract.getTotalWaves()
-      console.log('Retrieved total wave count...', count.toNumber())
-
       // Execute the actual wave from your smart contract.
-      const waveTx = await wavePortalContract.wave(message)
-      console.log('Mining...', waveTx.hash)
+      const waveTx = await wavePortalContract.wave(message, {
+        gasLimit: 300_000,
+      })
+
+      // Reset message.
+      setMessage('')
 
       await waveTx.wait()
-      console.log('Mined --', waveTx.hash)
-
-      count = await wavePortalContract.getTotalWaves()
-      console.log('Retrieved total wave count...', count.toNumber())
-
-      setWaveCount(count.toNumber())
     } catch (err) {
-      console.error('Something went wrong getting total waves:', err)
+      console.error('Something went wrong getting total waves')
+      setError('Please wait 1 minute before waving again!')
     }
-
-    // Reset message.
-    setMessage('')
   }
 
   const renderAllWaves = useCallback(() => {
@@ -180,7 +183,12 @@ export default function Home() {
               Connect to Wallet
             </ConnectButton>
           ) : (
-            <WaveForm message={message} setMessage={setMessage} wave={wave} />
+            <WaveForm
+              message={message}
+              setMessage={setMessage}
+              wave={wave}
+              error={error}
+            />
           )}
           {allWaves.length > 0 && (
             <div>
