@@ -6,6 +6,7 @@ import "hardhat/console.sol";
 contract WavePortal {
     uint256 totalWaves;
     uint256 private seed;
+    mapping(address => uint256) public lastWavedAt;
 
     event NewWave(address indexed from, uint256 timestamp, string message);
 
@@ -22,6 +23,16 @@ contract WavePortal {
     }
 
     function wave(string memory _message) public {
+        // We need to make sure the current timestamp is at least 15-minutes
+        // bigger than the last timestamp we stored.
+        require(
+            lastWavedAt[msg.sender] + 1 minutes < block.timestamp,
+            "Wait 1m"
+        );
+
+        // Update the current timestamp we have for the user.
+        lastWavedAt[msg.sender] = block.timestamp;
+
         totalWaves += 1;
         waves.push(Wave(msg.sender, _message, block.timestamp));
 
