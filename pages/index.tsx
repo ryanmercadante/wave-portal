@@ -2,19 +2,18 @@ import { ethers } from 'ethers'
 import Head from 'next/head'
 import Image from 'next/image'
 import React, { useCallback, useEffect, useState } from 'react'
+import { WaveForm } from '../components/WaveForm'
 import { WaveList } from '../components/WaveList'
 import {
-  ButtonContainer,
   ConnectButton,
   Container,
   Footer,
-  GlowingButton,
   Header,
   Logo,
   Main,
   SubHeader,
+  Text,
 } from '../styles'
-import { Text } from '../styles/components/Text'
 import { WavePortal, WavePortal__factory } from '../types'
 
 export interface CleanedWave {
@@ -55,6 +54,7 @@ export default function Home() {
   const [currentAccount, setCurrentAccount] = useState('')
   const [waveCount, setWaveCount] = useState(0)
   const [allWaves, setAllWaves] = useState<CleanedWave[]>([])
+  const [message, setMessage] = useState('')
 
   async function getAllWaves() {
     if (!window.ethereum) return
@@ -117,7 +117,9 @@ export default function Home() {
     }
   }
 
-  async function wave() {
+  async function wave(e: React.FormEvent) {
+    e.preventDefault()
+
     if (!window.ethereum) return
 
     const wavePortalContract = getWavePortalContract(ethers, window.ethereum)
@@ -127,7 +129,7 @@ export default function Home() {
       console.log('Retrieved total wave count...', count.toNumber())
 
       // Execute the actual wave from your smart contract.
-      const waveTx = await wavePortalContract.wave('Hi there!')
+      const waveTx = await wavePortalContract.wave(message)
       console.log('Mining...', waveTx.hash)
 
       await waveTx.wait()
@@ -140,12 +142,13 @@ export default function Home() {
     } catch (err) {
       console.error('Something went wrong getting total waves:', err)
     }
+
+    // Reset message.
+    setMessage('')
   }
 
   const renderAllWaves = useCallback(() => {
-    console.log('use callbacks')
     if (allWaves.length > 0) {
-      console.log('all', allWaves)
       return <WaveList waves={allWaves} />
     }
   }, [allWaves])
@@ -172,18 +175,16 @@ export default function Home() {
             I'm Ryan and I'm a full stack developer who is learning all things
             web3!
           </SubHeader>
-          <ButtonContainer>
-            {currentAccount === '' ? (
-              <ConnectButton onClick={connectWallet}>
-                Connect to Wallet
-              </ConnectButton>
-            ) : (
-              <GlowingButton onClick={wave}>Wave at Me!</GlowingButton>
-            )}
-          </ButtonContainer>
-          {waveCount > 0 && (
+          {currentAccount === '' ? (
+            <ConnectButton onClick={connectWallet}>
+              Connect to Wallet
+            </ConnectButton>
+          ) : (
+            <WaveForm message={message} setMessage={setMessage} wave={wave} />
+          )}
+          {allWaves.length > 0 && (
             <div>
-              <Text>{waveCount} people have waved to me! :)</Text>
+              <Text>{allWaves.length} people have waved to me! :)</Text>
             </div>
           )}
           {renderAllWaves()}

@@ -3,14 +3,13 @@ import { CleanedWave } from '../pages'
 import { WaveListItem } from '../styles'
 
 interface WaveItemProps {
-  index: number
   wave: CleanedWave
 }
 
-export const WaveItem: React.FC<WaveItemProps> = ({ index, wave }) => {
+export const WaveItem: React.FC<WaveItemProps> = ({ wave }) => {
   return (
     <WaveListItem>
-      <div key={index}>
+      <div>
         <p>
           <strong>Address:</strong> {wave.address}
         </p>

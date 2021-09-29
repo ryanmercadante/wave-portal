@@ -1,6 +1,6 @@
 import React from 'react'
 import { CleanedWave } from '../pages'
-import { WaveList as StWaveList } from '../styles'
+import { WaveList as StWaveList, WaveListContainer } from '../styles'
 import { WaveItem } from './WaveItem'
 
 interface WaveListProps {
@@ -9,10 +9,12 @@ interface WaveListProps {
 
 export const WaveList: React.FC<WaveListProps> = ({ waves }) => {
   return (
-    <StWaveList>
-      {waves.map((wave, index) => (
-        <WaveItem index={index} wave={wave} />
-      ))}
-    </StWaveList>
+    <WaveListContainer>
+      <StWaveList>
+        {waves.map((wave) => (
+          <WaveItem key={wave.timestamp} wave={wave} />
+        ))}
+      </StWaveList>
+    </WaveListContainer>
   )
 }
