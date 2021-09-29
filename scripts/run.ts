@@ -15,9 +15,12 @@ const main = async () => {
   console.log('Contract balance:', ethers.utils.formatEther(contractBalance))
 
   /*
-   * Send Wave
+   * Send two waves
    */
-  let waveTxn = await waveContract.wave('A message!')
+  let waveTxn = await waveContract.wave('Wave 1!')
+  await waveTxn.wait()
+
+  waveTxn = await waveContract.wave('Wave 2!')
   await waveTxn.wait()
 
   /*
