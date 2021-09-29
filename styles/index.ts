@@ -1,0 +1,7 @@
+export * from '../styles/components/Button'
+export * from '../styles/components/Container'
+export * from '../styles/components/Footer'
+export * from '../styles/components/Header'
+export * from '../styles/components/Logo'
+export * from '../styles/components/Main'
+export * from '../styles/components/SubHeader'
