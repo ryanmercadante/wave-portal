@@ -1,37 +1,27 @@
 import { ethers } from 'hardhat'
 
 const main = async () => {
-  const [owner, randomPerson] = await ethers.getSigners()
   const waveContractFactory = await ethers.getContractFactory('WavePortal')
   const waveContract = await waveContractFactory.deploy()
-
-  // Wait for the contract to be mined
   await waveContract.deployed()
+  console.log('Contract addy:', waveContract.address)
 
-  console.log('Contract deployed to:', waveContract.address)
-  console.log('Contract deployed by:', owner.address)
-
-  let waveCount = await waveContract.getTotalWaves()
-
-  let waveTx = await waveContract.wave()
-  await waveTx.wait()
-  waveTx = await waveContract.wave()
-  await waveTx.wait()
-
-  waveTx = await waveContract.connect(randomPerson).wave()
-  await waveTx.wait()
-
-  waveTx = await waveContract.connect(randomPerson).wave()
-  await waveTx.wait()
-
-  waveTx = await waveContract.connect(randomPerson).wave()
-  await waveTx.wait()
-
+  let waveCount
   waveCount = await waveContract.getTotalWaves()
-  const { 0: topWaverAddress, 1: topWaverWaveCount } =
-    await waveContract.getTopWaver()
-  console.log('Top Waver Address:', topWaverAddress)
-  console.log('Top Waver Wave Count:', topWaverWaveCount.toNumber())
+  console.log(waveCount.toNumber())
+
+  /**
+   * Let's send a few waves!
+   */
+  let waveTxn = await waveContract.wave('A message!')
+  await waveTxn.wait() // Wait for the transaction to be mined
+
+  const [_, randoPerson] = await ethers.getSigners()
+  waveTxn = await waveContract.connect(randoPerson).wave('Another message!')
+  await waveTxn.wait() // Wait for the transaction to be mined
+
+  let allWaves = await waveContract.getAllWaves()
+  console.log(allWaves)
 }
 
 const runMain = async () => {

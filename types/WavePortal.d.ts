@@ -21,54 +21,45 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
 interface WavePortalInterface extends ethers.utils.Interface {
   functions: {
-    "getTopWaver()": FunctionFragment;
+    "getAllWaves()": FunctionFragment;
     "getTotalWaves()": FunctionFragment;
-    "isWaver(address)": FunctionFragment;
-    "newWaver(address)": FunctionFragment;
-    "updateWaverWaveCount(address)": FunctionFragment;
-    "wave()": FunctionFragment;
-    "waverList(uint256)": FunctionFragment;
+    "wave(string)": FunctionFragment;
   };
 
   encodeFunctionData(
-    functionFragment: "getTopWaver",
+    functionFragment: "getAllWaves",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getTotalWaves",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "isWaver", values: [string]): string;
-  encodeFunctionData(functionFragment: "newWaver", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "updateWaverWaveCount",
-    values: [string]
-  ): string;
-  encodeFunctionData(functionFragment: "wave", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "waverList",
-    values: [BigNumberish]
-  ): string;
+  encodeFunctionData(functionFragment: "wave", values: [string]): string;
 
   decodeFunctionResult(
-    functionFragment: "getTopWaver",
+    functionFragment: "getAllWaves",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "getTotalWaves",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "isWaver", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "newWaver", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "updateWaverWaveCount",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "wave", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "waverList", data: BytesLike): Result;
 
-  events: {};
+  events: {
+    "NewWave(address,uint256,string)": EventFragment;
+  };
+
+  getEvent(nameOrSignatureOrTopic: "NewWave"): EventFragment;
 }
+
+export type NewWaveEvent = TypedEvent<
+  [string, BigNumber, string] & {
+    from: string;
+    timestamp: BigNumber;
+    message: string;
+  }
+>;
 
 export class WavePortal extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -114,144 +105,98 @@ export class WavePortal extends BaseContract {
   interface: WavePortalInterface;
 
   functions: {
-    getTopWaver(
+    getAllWaves(
       overrides?: CallOverrides
     ): Promise<
-      [string, BigNumber] & { waverAddress: string; waveCount: BigNumber }
+      [
+        ([string, string, BigNumber] & {
+          waver: string;
+          message: string;
+          timestamp: BigNumber;
+        })[]
+      ]
     >;
 
     getTotalWaves(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    isWaver(
-      waverAddress: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    newWaver(
-      waverAddress: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    updateWaverWaveCount(
-      waverAddress: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     wave(
+      _message: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
-
-    waverList(arg0: BigNumberish, overrides?: CallOverrides): Promise<[string]>;
   };
 
-  getTopWaver(
+  getAllWaves(
     overrides?: CallOverrides
   ): Promise<
-    [string, BigNumber] & { waverAddress: string; waveCount: BigNumber }
+    ([string, string, BigNumber] & {
+      waver: string;
+      message: string;
+      timestamp: BigNumber;
+    })[]
   >;
 
   getTotalWaves(overrides?: CallOverrides): Promise<BigNumber>;
 
-  isWaver(waverAddress: string, overrides?: CallOverrides): Promise<boolean>;
-
-  newWaver(
-    waverAddress: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  updateWaverWaveCount(
-    waverAddress: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   wave(
+    _message: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
-
-  waverList(arg0: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
-    getTopWaver(
+    getAllWaves(
       overrides?: CallOverrides
     ): Promise<
-      [string, BigNumber] & { waverAddress: string; waveCount: BigNumber }
+      ([string, string, BigNumber] & {
+        waver: string;
+        message: string;
+        timestamp: BigNumber;
+      })[]
     >;
 
     getTotalWaves(overrides?: CallOverrides): Promise<BigNumber>;
 
-    isWaver(waverAddress: string, overrides?: CallOverrides): Promise<boolean>;
-
-    newWaver(waverAddress: string, overrides?: CallOverrides): Promise<void>;
-
-    updateWaverWaveCount(
-      waverAddress: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    wave(overrides?: CallOverrides): Promise<void>;
-
-    waverList(arg0: BigNumberish, overrides?: CallOverrides): Promise<string>;
+    wave(_message: string, overrides?: CallOverrides): Promise<void>;
   };
 
-  filters: {};
+  filters: {
+    "NewWave(address,uint256,string)"(
+      from?: string | null,
+      timestamp?: null,
+      message?: null
+    ): TypedEventFilter<
+      [string, BigNumber, string],
+      { from: string; timestamp: BigNumber; message: string }
+    >;
+
+    NewWave(
+      from?: string | null,
+      timestamp?: null,
+      message?: null
+    ): TypedEventFilter<
+      [string, BigNumber, string],
+      { from: string; timestamp: BigNumber; message: string }
+    >;
+  };
 
   estimateGas: {
-    getTopWaver(overrides?: CallOverrides): Promise<BigNumber>;
+    getAllWaves(overrides?: CallOverrides): Promise<BigNumber>;
 
     getTotalWaves(overrides?: CallOverrides): Promise<BigNumber>;
 
-    isWaver(
-      waverAddress: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    newWaver(
-      waverAddress: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    updateWaverWaveCount(
-      waverAddress: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     wave(
+      _message: string,
       overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    waverList(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    getTopWaver(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    getAllWaves(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getTotalWaves(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    isWaver(
-      waverAddress: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    newWaver(
-      waverAddress: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    updateWaverWaveCount(
-      waverAddress: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
     wave(
+      _message: string,
       overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    waverList(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };
 }

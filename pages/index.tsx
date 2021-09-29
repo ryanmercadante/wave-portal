@@ -1,7 +1,8 @@
 import { ethers } from 'ethers'
 import Head from 'next/head'
 import Image from 'next/image'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
+import { WaveList } from '../components/WaveList'
 import {
   ButtonContainer,
   ConnectButton,
@@ -14,20 +15,58 @@ import {
   SubHeader,
 } from '../styles'
 import { Text } from '../styles/components/Text'
-import { WavePortal__factory } from '../types'
+import { WavePortal, WavePortal__factory } from '../types'
 
-interface TopWaver {
+export interface CleanedWave {
   address: string
-  count: number
+  timestamp: number
+  message: string
+}
+
+const CONTRACT_ADDRESS = '0x47191eAa61e9F6B30d2D3f24746D878dd27B724B'
+
+function getWavePortalContract(_ethers: any, _ethereum: any): WavePortal {
+  const provider = new _ethers.providers.Web3Provider(_ethereum)
+  const signer = provider.getSigner()
+  return WavePortal__factory.connect(CONTRACT_ADDRESS, signer)
+}
+
+async function fetchWaves(
+  _wavePortalContract: WavePortal
+): Promise<CleanedWave[] | undefined> {
+  try {
+    const waves = await _wavePortalContract.getAllWaves()
+    const cleanedWaves: CleanedWave[] = waves?.map(
+      (wave) =>
+        ({
+          address: wave.waver,
+          timestamp: new Date(wave.timestamp.toNumber() * 1000),
+          message: wave.message,
+        } as unknown as CleanedWave)
+    )
+    return cleanedWaves
+  } catch (err) {
+    console.error('Something went wrong getting all waves:', err)
+    return undefined
+  }
 }
 
 export default function Home() {
   const [currentAccount, setCurrentAccount] = useState('')
   const [waveCount, setWaveCount] = useState(0)
-  const [topWaver, setTopWaver] = useState<TopWaver>({
-    address: '',
-    count: 0,
-  })
+  const [allWaves, setAllWaves] = useState<CleanedWave[]>([])
+
+  async function getAllWaves() {
+    if (!window.ethereum) return
+
+    const wavePortalContract = getWavePortalContract(ethers, window.ethereum)
+
+    const waves = await fetchWaves(wavePortalContract)
+    if (!waves) return
+
+    console.log('here', waves)
+    setAllWaves(waves)
+  }
 
   async function checkIfWalletConnected() {
     // Check that we have access to window global.
@@ -50,6 +89,8 @@ export default function Home() {
         const firstAccount = accounts[0]
         setCurrentAccount(firstAccount)
       }
+
+      await getAllWaves()
     } catch (err) {
       console.error(
         'Something went wrong requesting accounts from ethereum:',
@@ -76,44 +117,17 @@ export default function Home() {
     }
   }
 
-  async function getTopWaver() {
-    if (!window.ethereum) return
-
-    const CONTRACT_ADDRESS = '0xB6639b87ff8224CF9d40a85A67A85814a32c3c9B'
-
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    const signer = provider.getSigner()
-    const wavePortalContract = WavePortal__factory.connect(
-      CONTRACT_ADDRESS,
-      signer
-    )
-
-    try {
-      const [address, count] = await wavePortalContract.getTopWaver()
-      setTopWaver({ address, count: count.toNumber() })
-    } catch (err) {
-      console.error('Something went wrong getting top waver:', err)
-    }
-  }
-
   async function wave() {
     if (!window.ethereum) return
 
-    const CONTRACT_ADDRESS = '0xB6639b87ff8224CF9d40a85A67A85814a32c3c9B'
-
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    const signer = provider.getSigner()
-    const wavePortalContract = WavePortal__factory.connect(
-      CONTRACT_ADDRESS,
-      signer
-    )
+    const wavePortalContract = getWavePortalContract(ethers, window.ethereum)
 
     try {
       let count = await wavePortalContract.getTotalWaves()
       console.log('Retrieved total wave count...', count.toNumber())
 
       // Execute the actual wave from your smart contract.
-      const waveTx = await wavePortalContract.wave()
+      const waveTx = await wavePortalContract.wave('Hi there!')
       console.log('Mining...', waveTx.hash)
 
       await waveTx.wait()
@@ -122,13 +136,19 @@ export default function Home() {
       count = await wavePortalContract.getTotalWaves()
       console.log('Retrieved total wave count...', count.toNumber())
 
-      await getTopWaver()
-
       setWaveCount(count.toNumber())
     } catch (err) {
       console.error('Something went wrong getting total waves:', err)
     }
   }
+
+  const renderAllWaves = useCallback(() => {
+    console.log('use callbacks')
+    if (allWaves.length > 0) {
+      console.log('all', allWaves)
+      return <WaveList waves={allWaves} />
+    }
+  }, [allWaves])
 
   useEffect(() => {
     checkIfWalletConnected()
@@ -164,12 +184,9 @@ export default function Home() {
           {waveCount > 0 && (
             <div>
               <Text>{waveCount} people have waved to me! :)</Text>
-              <Text>
-                Top Waver Address: {topWaver.address} | Top Waver Number of
-                Waves: {topWaver.count}
-              </Text>
             </div>
           )}
+          {renderAllWaves()}
         </div>
       </Main>
 
