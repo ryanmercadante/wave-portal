@@ -22,7 +22,7 @@ export interface CleanedWave {
   message: string
 }
 
-const CONTRACT_ADDRESS = '0x1086f358c456Ae83f2C41967546447d2414dbd8C'
+const CONTRACT_ADDRESS = '0xa3E7896D1c485B766080649D2Bd6f198ccb129cF'
 
 function getWavePortalContract(_ethers: any, _ethereum: any): WavePortal {
   const provider = new _ethers.providers.Web3Provider(_ethereum)
