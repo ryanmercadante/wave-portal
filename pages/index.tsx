@@ -137,7 +137,7 @@ export default function Home() {
     try {
       // Execute the actual wave from your smart contract.
       const waveTx = await wavePortalContract.wave(message, {
-        gasLimit: 300_000,
+        gasLimit: 500_000,
       })
 
       // Reset message.
